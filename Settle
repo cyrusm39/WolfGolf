@@ -1,0 +1,775 @@
+index.html 
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wolf – Settle Up</title>
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --card:#111319;
+      --muted:#a8b0bf;
+      --text:#f4f6fb;
+      --line:rgba(255,255,255,.08);
+      --pill:rgba(255,255,255,.08);
+      --good:#53d18a;
+      --bad:#ff6b6b;
+      --accent:#7aa7ff;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 20% -10%, rgba(122,167,255,.18), transparent 55%),
+                  radial-gradient(900px 700px at 90% 0%, rgba(83,209,138,.14), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+    }
+    .wrap{
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 14px 90px; /* extra for sticky bar */
+    }
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 12px;
+    }
+    h1{ font-size: 20px; margin: 2px 0 0; letter-spacing:.2px; }
+    .sub{
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.35;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: var(--pill);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-weight: 800;
+      font-size: 13px;
+      white-space:nowrap;
+    }
+    .card{
+      background: rgba(17,19,25,.88);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .grid{ display:grid; grid-template-columns: 1fr; gap: 12px; }
+    @media(min-width: 720px){ .grid{ grid-template-columns: 1fr 1fr; } }
+
+    .sectionTitle{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom: 10px;
+    }
+    h2{ margin:0; font-size: 15px; letter-spacing:.2px; }
+    .hint{ color: var(--muted); font-size: 12px; }
+
+    /* players */
+    .players{ display:flex; flex-direction:column; gap:10px; }
+    .row{
+      display:grid;
+      grid-template-columns: auto 1fr 92px auto;
+      gap: 10px;
+      align-items:center;
+      padding: 10px 10px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.03);
+    }
+    .row.inactive{ opacity: .45; }
+    .toggle{
+      width: 42px; height: 26px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      position: relative;
+      cursor: pointer;
+      outline: none;
+    }
+    .toggle::after{
+      content:"";
+      position:absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.65);
+      transition: all .15s ease;
+    }
+    .toggle.on{
+      background: rgba(83,209,138,.18);
+      border-color: rgba(83,209,138,.35);
+    }
+    .toggle.on::after{ left: 21px; background: rgba(83,209,138,.95); }
+
+    .name{ font-weight: 800; font-size: 15px; letter-spacing:.15px; }
+    .dots{
+      width: 92px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 900;
+      font-size: 15px;
+      text-align: right;
+      outline: none;
+    }
+    .dots:disabled{ opacity: .65; cursor:not-allowed; }
+    .iconBtn{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      width: 38px; height: 38px;
+      border-radius: 12px;
+      font-weight: 900;
+      cursor:pointer;
+    }
+    .iconBtn:active{ transform: translateY(1px); }
+
+    /* guest add */
+    .guestRow{
+      display:flex;
+      gap:10px;
+      margin-top: 10px;
+      align-items:center;
+    }
+    .textIn{
+      flex:1;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 700;
+      outline: none;
+      font-size: 14px;
+    }
+    .btn{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 11px 12px;
+      border-radius: 14px;
+      font-weight: 900;
+      letter-spacing:.15px;
+      cursor:pointer;
+      min-width: 120px;
+    }
+    .btn.primary{
+      border-color: rgba(122,167,255,.35);
+      background: rgba(122,167,255,.18);
+    }
+    .btn.good{
+      border-color: rgba(83,209,138,.35);
+      background: rgba(83,209,138,.16);
+    }
+    .btn.ghost{ background: transparent; }
+    .btn:active{ transform: translateY(1px); }
+
+    .actions{
+      display:flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .actions .btn{ flex:1; }
+
+    /* output lists */
+    ul{ margin: 0; padding: 0; list-style:none; display:flex; flex-direction:column; gap: 8px; }
+    .li{
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .li .left{ font-weight: 900; }
+    .li .right{ font-weight: 950; }
+    .right.good{ color: var(--good); }
+    .right.bad{ color: var(--bad); }
+
+    .shareBox{
+      margin-top: 12px;
+      border: 1px dashed rgba(255,255,255,.18);
+      border-radius: 14px;
+      background: rgba(255,255,255,.03);
+      padding: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .footer{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+    /* only-active toggle row */
+    .topControls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom: 10px;
+    }
+    .miniToggle{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      user-select:none;
+    }
+    .miniToggle span{ font-size: 13px; color: var(--muted); font-weight: 800; }
+    .miniToggle strong{ color: var(--text); font-weight: 900; }
+
+    /* sticky bottom bar */
+    .sticky{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(10,11,14,.72);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+    .stickyInner{
+      max-width: 760px;
+      margin: 0 auto;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .sticky .btn{ flex:1; min-width: 0; }
+    @media(min-width: 720px){
+      .wrap{ padding-bottom: 22px; }
+      .sticky{ display:none; }
+    }
+
+    /* toast */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 76px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.75);
+      border: 1px solid rgba(255,255,255,.12);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 900;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .15s ease;
+    }
+    .toast.show{ opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Wolf – Settle Up</h1>
+        <div class="sub">
+          Toggle who’s playing, enter dots, then settle. <span class="mono">Dot = $5</span>.
+        </div>
+      </div>
+      <div class="pill">Dot value: <span>$5</span></div>
+    </header>
+
+    <div class="card">
+      <div class="topControls">
+        <div class="miniToggle">
+          <button class="toggle on" id="onlyActiveToggle" type="button" aria-label="Only show active players"></button>
+          <div>
+            <span>View</span><br>
+            <strong id="onlyActiveLabel">Show all players</strong>
+          </div>
+        </div>
+
+        <button class="btn ghost" id="copyPaymentsBtn">Copy payments text</button>
+      </div>
+
+      <div class="sectionTitle">
+        <h2>Players</h2>
+        <div class="hint">Turn on = playing</div>
+      </div>
+
+      <div id="players" class="players"></div>
+
+      <div class="sectionTitle" style="margin-top:14px;">
+        <h2>Add guest player</h2>
+        <div class="hint">Not in the usual list</div>
+      </div>
+      <div class="guestRow">
+        <input id="guestName" class="textIn" type="text" placeholder="Type a name (e.g., Beau)" />
+        <button class="btn primary" id="addGuestBtn">Add</button>
+      </div>
+
+      <div class="actions">
+        <button class="btn good" id="calcBtn">Settle now</button>
+        <button class="btn" id="shareBtn">Create share link</button>
+        <button class="btn ghost" id="resetBtn">Reset dots</button>
+      </div>
+
+      <div id="shareBox" class="shareBox">(Tap “Create share link”)</div>
+
+      <div class="footer">
+        Rule matches your example: for each pair, lower dots pays difference × $5 to higher dots, then it’s netted to minimize transactions.
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:12px;">
+      <div class="card">
+        <div class="sectionTitle">
+          <h2>Net totals</h2>
+          <div class="hint">+ receives / – pays</div>
+        </div>
+        <ul id="netList"></ul>
+      </div>
+
+      <div class="card">
+        <div class="sectionTitle">
+          <h2>Who pays who</h2>
+          <div class="hint">Minimal payments</div>
+        </div>
+        <ul id="payList"></ul>
+        <div id="balanceMsg" class="footer"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sticky">
+    <div class="stickyInner">
+      <button class="btn good" id="stickySettle">Settle now</button>
+      <button class="btn" id="stickyShare">Share</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Copied</div>
+
+<script>
+  const DOT_VALUE = 5;
+
+  const USUAL_PLAYERS = [
+    "Cyrus","Andrew","Eric","Cameron","James","Scott","Randy","Jeff","Jackson"
+  ];
+
+  const playersEl = document.getElementById("players");
+  const calcBtn = document.getElementById("calcBtn");
+  const shareBtn = document.getElementById("shareBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const shareBox = document.getElementById("shareBox");
+  const netList = document.getElementById("netList");
+  const payList = document.getElementById("payList");
+  const balanceMsg = document.getElementById("balanceMsg");
+  const toast = document.getElementById("toast");
+
+  const onlyActiveToggle = document.getElementById("onlyActiveToggle");
+  const onlyActiveLabel = document.getElementById("onlyActiveLabel");
+  const copyPaymentsBtn = document.getElementById("copyPaymentsBtn");
+
+  const guestName = document.getElementById("guestName");
+  const addGuestBtn = document.getElementById("addGuestBtn");
+
+  const stickySettle = document.getElementById("stickySettle");
+  const stickyShare = document.getElementById("stickyShare");
+
+  let onlyActiveView = false;
+
+  function showToast(text){
+    toast.textContent = text;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 900);
+  }
+
+  function fmtMoney(n){
+    const sign = n < 0 ? "-" : "";
+    const abs = Math.abs(n);
+    return `${sign}$${abs.toFixed(0)}`;
+  }
+
+  function safeName(s){
+    return (s || "").trim().replace(/\s+/g, " ");
+  }
+
+  function makeRow(player, isGuest=false){
+    const row = document.createElement("div");
+    row.className = "row";
+    row.dataset.name = player;
+    row.dataset.guest = isGuest ? "1" : "0";
+
+    const toggle = document.createElement("button");
+    toggle.className = "toggle on";
+    toggle.type = "button";
+    toggle.setAttribute("aria-label", `Toggle ${player} playing`);
+
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = player;
+
+    const dots = document.createElement("input");
+    dots.className = "dots";
+    dots.type = "number";
+    dots.step = "1";
+    dots.min = "0";
+    dots.value = "0";
+    dots.inputMode = "numeric";
+
+    const remove = document.createElement("button");
+    remove.className = "iconBtn";
+    remove.type = "button";
+    remove.title = isGuest ? "Remove guest" : "Clear dots";
+    remove.textContent = isGuest ? "✕" : "⟲";
+
+    function setActive(isOn){
+      toggle.classList.toggle("on", isOn);
+      row.classList.toggle("inactive", !isOn);
+      dots.disabled = !isOn;
+      if(!isOn) dots.value = "0";
+      applyOnlyActiveView();
+    }
+
+    toggle.addEventListener("click", () => {
+      const isOn = !toggle.classList.contains("on");
+      setActive(isOn);
+    });
+
+    dots.addEventListener("input", () => {
+      let v = parseInt(dots.value || "0", 10);
+      if(!Number.isFinite(v) || v < 0) v = 0;
+      dots.value = String(v);
+    });
+
+    remove.addEventListener("click", () => {
+      if(isGuest){
+        row.remove();
+        render();
+      }else{
+        // usual player: just zero dots (keep active state)
+        dots.value = "0";
+        render();
+      }
+      applyOnlyActiveView();
+    });
+
+    row.appendChild(toggle);
+    row.appendChild(name);
+    row.appendChild(dots);
+    row.appendChild(remove);
+
+    row.getData = () => ({
+      name: player,
+      active: toggle.classList.contains("on"),
+      dots: parseInt(dots.value || "0", 10) || 0,
+      guest: isGuest
+    });
+
+    row.setData = (active, dotVal) => {
+      setActive(!!active);
+      dots.value = String(parseInt(dotVal ?? 0, 10) || 0);
+    };
+
+    return row;
+  }
+
+  function clearOutputs(){
+    netList.innerHTML = "";
+    payList.innerHTML = "";
+    balanceMsg.textContent = "";
+  }
+
+  function li(left, right, cls){
+    const el = document.createElement("li");
+    el.className = "li";
+    const l = document.createElement("div");
+    l.className = "left";
+    l.textContent = left;
+    const r = document.createElement("div");
+    r.className = "right " + (cls || "");
+    r.textContent = right;
+    el.appendChild(l);
+    el.appendChild(r);
+    return el;
+  }
+
+  function computeSettlements(players){
+    const net = new Map(players.map(p => [p.name, 0]));
+
+    for(let i=0;i<players.length;i++){
+      for(let j=i+1;j<players.length;j++){
+        const a = players[i], b = players[j];
+        if(a.dots === b.dots) continue;
+        const higher = a.dots > b.dots ? a : b;
+        const lower  = a.dots > b.dots ? b : a;
+        const amt = (higher.dots - lower.dots) * DOT_VALUE;
+        net.set(higher.name, net.get(higher.name) + amt);
+        net.set(lower.name,  net.get(lower.name)  - amt);
+      }
+    }
+
+    const creditors = [];
+    const debtors = [];
+    for(const [name, amount] of net.entries()){
+      if(amount > 0) creditors.push({name, amount});
+      else if(amount < 0) debtors.push({name, amount: -amount});
+    }
+
+    creditors.sort((x,y)=> y.amount - x.amount);
+    debtors.sort((x,y)=> y.amount - x.amount);
+
+    const payments = [];
+    let ci = 0, di = 0;
+    while(ci < creditors.length && di < debtors.length){
+      const c = creditors[ci];
+      const d = debtors[di];
+      const pay = Math.min(c.amount, d.amount);
+      payments.push({from: d.name, to: c.name, amount: pay});
+      c.amount -= pay;
+      d.amount -= pay;
+      if(c.amount === 0) ci++;
+      if(d.amount === 0) di++;
+    }
+
+    return { net, payments };
+  }
+
+  function getActivePlayers(){
+    const rows = [...playersEl.children];
+    return rows.map(r => r.getData())
+      .filter(p => p.active)
+      .map(p => ({ name: p.name, dots: p.dots }));
+  }
+
+  function render(){
+    clearOutputs();
+    const active = getActivePlayers();
+
+    if(active.length < 2){
+      balanceMsg.textContent = "Turn on at least 2 players.";
+      return;
+    }
+
+    const { net, payments } = computeSettlements(active);
+
+    const netArr = [...net.entries()].sort((a,b)=> b[1] - a[1]);
+    for(const [name, amt] of netArr){
+      const cls = amt > 0 ? "good" : (amt < 0 ? "bad" : "");
+      netList.appendChild(li(name, fmtMoney(amt), cls));
+    }
+
+    if(payments.length === 0){
+      payList.appendChild(li("All even", "$0", "good"));
+      balanceMsg.textContent = "No payments needed.";
+    } else {
+      let total = 0;
+      for(const p of payments){
+        total += p.amount;
+        payList.appendChild(li(`${p.from} → ${p.to}`, fmtMoney(p.amount), ""));
+      }
+      balanceMsg.textContent = `Total moved: ${fmtMoney(total)} (all in $5 increments).`;
+    }
+  }
+
+  function applyOnlyActiveView(){
+    const rows = [...playersEl.children];
+    for(const row of rows){
+      const d = row.getData();
+      row.style.display = (onlyActiveView && !d.active) ? "none" : "grid";
+    }
+    onlyActiveLabel.textContent = onlyActiveView ? "Only active players" : "Show all players";
+    onlyActiveToggle.classList.toggle("on", onlyActiveView);
+  }
+
+  function encodeShareState(){
+    const rows = [...playersEl.children];
+    const data = rows.map(r => r.getData());
+    const json = JSON.stringify({ v:2, dotValue: DOT_VALUE, onlyActiveView, players: data });
+    const b64 = btoa(unescape(encodeURIComponent(json)))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    return b64;
+  }
+
+  function decodeShareState(b64url){
+    try{
+      const b64 = b64url.replace(/-/g,'+').replace(/_/g,'/');
+      const pad = b64.length % 4 ? "=".repeat(4 - (b64.length % 4)) : "";
+      const json = decodeURIComponent(escape(atob(b64 + pad)));
+      const obj = JSON.parse(json);
+      if(!obj || (obj.v !== 2) || !Array.isArray(obj.players)) return null;
+      return obj;
+    } catch {
+      return null;
+    }
+  }
+
+  function applyState(obj){
+    if(!obj) return;
+
+    onlyActiveView = !!obj.onlyActiveView;
+
+    // rebuild rows from state (keeps any guests)
+    playersEl.innerHTML = "";
+    for(const p of obj.players){
+      if(!p?.name) continue;
+      const row = makeRow(p.name, !!p.guest);
+      playersEl.appendChild(row);
+      row.setData(!!p.active, p.dots ?? 0);
+    }
+    applyOnlyActiveView();
+    render();
+  }
+
+  function createDefaultRoster(){
+    playersEl.innerHTML = "";
+    for(const p of USUAL_PLAYERS){
+      playersEl.appendChild(makeRow(p, false));
+    }
+    applyOnlyActiveView();
+    render();
+  }
+
+  async function copyText(text, okMsg="Copied"){
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast(okMsg);
+    }catch{
+      showToast("Copy manually");
+    }
+  }
+
+  function paymentsAsText(){
+    const active = getActivePlayers();
+    if(active.length < 2) return "Turn on at least 2 players.";
+
+    const { net, payments } = computeSettlements(active);
+    const lines = [];
+
+    lines.push("Wolf settle-up (Dot = $5)");
+    lines.push("");
+
+    // Payment lines
+    if(payments.length === 0){
+      lines.push("All even. No payments needed.");
+    }else{
+      lines.push("Payments:");
+      for(const p of payments){
+        lines.push(`- ${p.from} pays ${p.to} ${fmtMoney(p.amount)}`);
+      }
+    }
+
+    // Net summary
+    const netArr = [...net.entries()].sort((a,b)=> b[1] - a[1]);
+    lines.push("");
+    lines.push("Net totals:");
+    for(const [name, amt] of netArr){
+      const sign = amt > 0 ? "+" : "";
+      lines.push(`- ${name}: ${sign}${fmtMoney(amt)}`);
+    }
+
+    return lines.join("\n");
+  }
+
+  // Events
+  calcBtn.addEventListener("click", () => {
+    render();
+    showToast("Settled");
+  });
+
+  shareBtn.addEventListener("click", async () => {
+    render();
+    const token = encodeShareState();
+    const url = `${location.origin}${location.pathname}?s=${token}`;
+    shareBox.textContent = url;
+    await copyText(url, "Share link copied");
+  });
+
+  resetBtn.addEventListener("click", () => {
+    const rows = [...playersEl.children];
+    for(const r of rows){
+      const d = r.getData();
+      r.setData(d.active, 0);
+    }
+    render();
+    shareBox.textContent = "(Tap “Create share link”)";
+    showToast("Dots reset");
+  });
+
+  onlyActiveToggle.addEventListener("click", () => {
+    onlyActiveView = !onlyActiveView;
+    applyOnlyActiveView();
+  });
+
+  copyPaymentsBtn.addEventListener("click", async () => {
+    render();
+    await copyText(paymentsAsText(), "Payments copied");
+  });
+
+  addGuestBtn.addEventListener("click", () => {
+    const name = safeName(guestName.value);
+    if(!name) return;
+
+    // prevent duplicates (case-insensitive)
+    const existing = [...playersEl.children].some(r => r.getData().name.toLowerCase() === name.toLowerCase());
+    if(existing){
+      showToast("Already on the list");
+      guestName.value = "";
+      return;
+    }
+
+    const row = makeRow(name, true);
+    playersEl.appendChild(row);
+    applyOnlyActiveView();
+    render();
+
+    guestName.value = "";
+    showToast("Guest added");
+  });
+
+  guestName.addEventListener("keydown", (e) => {
+    if(e.key === "Enter"){
+      e.preventDefault();
+      addGuestBtn.click();
+    }
+  });
+
+  // Sticky bar mirrors main buttons
+  stickySettle.addEventListener("click", () => calcBtn.click());
+  stickyShare.addEventListener("click", () => shareBtn.click());
+
+  // Init: load state from URL if present
+  (function init(){
+    const params = new URLSearchParams(location.search);
+    const s = params.get("s");
+    if(s){
+      const obj = decodeShareState(s);
+      if(obj){
+        applyState(obj);
+        shareBox.textContent = "(Loaded from share link)";
+        showToast("Loaded");
+        return;
+      }
+    }
+    createDefaultRoster();
+  })();
+</script>
+</body>
+</html>
